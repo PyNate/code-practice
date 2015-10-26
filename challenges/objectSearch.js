@@ -1,30 +1,38 @@
 function objectSearch(object, regex) {
   var result = [];
 
-  function recursiveSearch(value, currentLoc) {
-    if ( typeof value !== 'object' ) {
-      if ( value.match(regex) ) {
-        result.push(currentLoc);
-      }
-    } else if ( Array.isArray(value) ) {
+  function recursiveSearch(value, lastLoc) {
+    if ( Array.isArray(value) ) {
       for ( var i = 0; i < value.length; i++ ) {
-        if ( typeof value[i] === 'string' || typeof value[i] === 'object' ) {        
-          recursiveSearch(value[i], currentLoc + '[' + i + ']');
+        var currentLoc = lastLoc + '[' + i + ']';
+        if ( typeof value[i] === 'string' ) {
+          if ( value[i].match(regex) ) {
+            result.push(currentLoc);
+          }
+        } else if ( typeof value[i] === 'object' ) {        
+          recursiveSearch(value[i], currentLoc);
         }
       }
     } else {
       if ( !value.visited ) {
-        for ( key in value ) {
-          if ( typeof value[key] === 'string' || typeof value[key] === 'object' ) {        
-            if ( currentLoc.length === 0 ) recursiveSearch(value[key], currentLoc + key);
-            else recursiveSearch(value[key], currentLoc + '.' + key);
+        for ( var key in value ) {
+          var currentLoc = lastLoc.length === 0 ? lastLoc + key : lastLoc + '.' + key;
+          if ( typeof value[key] === 'string' ) {
+            if ( value[key].match(regex) ) {
+              result.push(currentLoc);
+            }
+          } else if ( typeof value[key] === 'object' ) {        
+            recursiveSearch(value[key], currentLoc);
           }
         }
         value.visited = true;
       }
     }
   }
-
-  recursiveSearch(object, '');
+  for ( var key in object ) {
+    if ( typeof object[key] === 'object' ) {        
+      recursiveSearch(object[key], key);
+    }
+  }
   return result;
 }
