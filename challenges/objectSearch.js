@@ -1,8 +1,7 @@
 function objectSearch(object, regex) {
   var result = [];
 
-  
-  function recursiveSearch(value, currentLoc)
+  function recursiveSearch(value, currentLoc) {
     if ( typeof value !== 'object' ) {
       if ( value.match(regex) ) {
         result.push(currentLoc);
@@ -12,10 +11,15 @@ function objectSearch(object, regex) {
         recursiveSearch(value[i], currentLoc + '[' + i + ']');
       }
     } else {
-      for ( key in value ) {
-        recursiveSearch(value[key], currentLoc + '.' + key);
+      if ( !value.visited ) {
+        for ( key in value ) {
+          if ( currentLoc.length === 0 ) recursiveSearch(value[key], currentLoc + key);
+          else recursiveSearch(value[key], currentLoc + '.' + key);
+        }
+        value.visited = true;
       }
     }
+  }
 
   recursiveSearch(object, '');
   return result;
