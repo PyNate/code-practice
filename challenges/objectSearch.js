@@ -1,43 +1,52 @@
 function objectSearch(object, regex) {
   var result = [];
 
-  function recursiveSearch(value, currentLoc) {
-    if ( typeof value === object && !Object.isExtensible(value) ) console.log("Frozen!");
-    if ( typeof value !== 'object' ) {
-      if ( value.match(regex) ) {
-        result.push(currentLoc);
-      }
-    } else if ( Array.isArray(value) ) {
-      for ( var i = 0; i < value.length; i++ ) {
-        if ( value [i] && (typeof value[i] === 'string' || typeof value[i] === 'object') ) {
-          try {
-            recursiveSearch(value[i], currentLoc + '[' + i + ']');
-          } catch (err) {
-            console.log(err.name);
-            if ( err.name === "InvalidStateError" || err.name === "SecurityError" ) continue;
-            else throw err;
+  function recursiveSearch(value, lastLoc) {
+    //Loops through the indexes and properties of the value passed in and adds matching strings to result.
+    //lastLoc is a string that represents the position of value with respect to the object passed to objectSearch
+    if ( !value.visited ) {
+      //set a "visited" flag on objects to prevent looping recursion 
+      value.visited = true;
+      if ( Array.isArray(value) ) {
+        for ( var i = 0; i < value.length; i++ ) {
+          if ( value[i] ) {
+            var currentLoc = lastLoc + '[' + i + ']';
+            if ( typeof value[i] === "string" && value[i].match(regex) ) {
+              result.push(currentLoc);
+            } else if ( typeof value[i] === "object" ) {
+              //Some objects will be protected, so try/catch is required.
+              try {
+                recursiveSearch(value[i], currentLoc);
+              } catch (err) {
+                //Error types to continue on determined through trial-and-error
+                if ( err.name === "InvalidStateError" || err.name === "SecurityError" ) continue;
+                else throw err;
+              }
+            }
           }
         }
-      }
-    } else {
-      if ( !value.visited ) {
-        value.visited = true;
+      } else {
+        //Non-array object search very similar to array handling. Could refactor to use underscore.map
         for ( var key in value ) {
-          if ( value[key] && (typeof value[key] === 'string' || typeof value[key] === 'object') ) {
-            try {
-              if ( currentLoc.length === 0 ) recursiveSearch(value[key], currentLoc + key);
-              else recursiveSearch(value[key], currentLoc + '.' + key);
-            } catch (err) {
-              console.log(err.name);
-              if ( err.name === "InvalidStateError" || err.name === "SecurityError" ) continue;
-              else throw err;
+          if ( value[key] && key !== "visited" ) {
+            var currentLoc = lastLoc.length === 0 ? lastLoc + key : lastLoc + '.' + key;
+            if ( typeof value[key] === "string" && value[key].match(regex) ) {
+              result.push(currentLoc);
+            } else if ( typeof value[key] === "object" ) {
+              try {
+                if ( lastLoc.length === 0 ) recursiveSearch(value[key], lastLoc + key);
+                else recursiveSearch(value[key], lastLoc + '.' + key);
+              } catch (err) {
+                if ( err.name === "InvalidStateError" || err.name === "SecurityError" ) continue;
+                else throw err;
+              }
             }
           }
         }
       }
     }
   }
-
+  //Initialize the search and return the result array.
   recursiveSearch(object, '');
   return result;
 }
