@@ -1,4 +1,5 @@
 function objectSearch(object, regex) {
+  //This solution currently fails for maximum call stack errors, but works for smaller inputs including looping objects.
   var result = [];
 
   function recursiveSearch(value, lastLoc) {
@@ -7,6 +8,7 @@ function objectSearch(object, regex) {
     if ( !value.visited ) {
       //set a "visited" flag on objects to prevent looping recursion 
       value.visited = true;
+
       if ( Array.isArray(value) ) {
         for ( var i = 0; i < value.length; i++ ) {
           if ( value[i] ) {
@@ -25,6 +27,7 @@ function objectSearch(object, regex) {
             }
           }
         }
+
       } else {
         //Non-array object search very similar to array handling. Could refactor to use underscore.map
         for ( var key in value ) {
